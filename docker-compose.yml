@@ -24,14 +24,14 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
   test-node-1:
     build:
-      context: ./test-node-1
+      context: ./test_node_1
       dockerfile: Dockerfile
-    container_name: test-node-1
+    container_name: test_node_1
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.test-node-1.rule=Host(`iw4sz.pl`)"
-      - "traefik.http.routers.test-node-1.entrypoints=websecure"
-      - "traefik.http.routers.test-node-1.tls.certresolver=myresolver"
+      - "traefik.http.routers.test_node_1.rule=Host(`iw4sz.pl`)"
+      - "traefik.http.routers.test_node_1.entrypoints=websecure"
+      - "traefik.http.routers.test_node_1.tls.certresolver=myresolver"
       - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
       - "traefik.http.routers.redirs.rule=hostregexp(`{host:.+}`)"
       - "traefik.http.routers.redirs.entrypoints=web"
