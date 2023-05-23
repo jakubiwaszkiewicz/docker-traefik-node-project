@@ -22,7 +22,7 @@ services:
     volumes:
       - "./letsencrypt:/letsencrypt"
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
-  test-node-1:
+  test_node_1:
     build:
       context: ./test_node_1
       dockerfile: Dockerfile
@@ -32,6 +32,34 @@ services:
       - "traefik.http.routers.test_node_1.rule=Host(`iw4sz.pl`)"
       - "traefik.http.routers.test_node_1.entrypoints=websecure"
       - "traefik.http.routers.test_node_1.tls.certresolver=myresolver"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+      - "traefik.http.routers.redirs.rule=hostregexp(`{host:.+}`)"
+      - "traefik.http.routers.redirs.entrypoints=web"
+      - "traefik.http.routers.redirs.middlewares=redirect-to-https"
+  test-node-2:
+    build:
+      context: ./test_node_2
+      dockerfile: Dockerfile
+    container_name: test_node_2
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.test_node_2.rule=Host(`portfolio.iw4sz.pl`)"
+      - "traefik.http.routers.test_node_2.entrypoints=websecure"
+      - "traefik.http.routers.test_node_2.tls.certresolver=myresolver"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+      - "traefik.http.routers.redirs.rule=hostregexp(`{host:.+}`)"
+      - "traefik.http.routers.redirs.entrypoints=web"
+      - "traefik.http.routers.redirs.middlewares=redirect-to-https"
+  test-node-3:
+    build:
+      context: ./test_node_3
+      dockerfile: Dockerfile
+    container_name: test_node_3
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.test_node_3.rule=Host(`services.iw4sz.pl`)"
+      - "traefik.http.routers.test_node_3.entrypoints=websecure"
+      - "traefik.http.routers.test_node_3.tls.certresolver=myresolver"
       - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
       - "traefik.http.routers.redirs.rule=hostregexp(`{host:.+}`)"
       - "traefik.http.routers.redirs.entrypoints=web"
