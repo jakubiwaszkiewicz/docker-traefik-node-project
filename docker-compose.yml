@@ -1,57 +1,43 @@
-version: "3.3"
+version: "3"
 services:
   traefik:
-    image: "traefik:v2.2.1"
+    image: "traefik:latest"
     container_name: traefik
-    hostname: traefik
-    command:
-      - --entrypoints.web.address=:80
-      - --entrypoints.websecure.address=:443
-      - --providers.docker
-      - --providers.docker.exposedByDefault=false
-      - --api
-      - --certificatesresolvers.le.acme.storage=./acme.json
-      - --certificatesresolvers.le.acme.tlschallenge=true
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - proxy
     ports:
       - "80:80"
       - "443:443"
+    environment:
+      - GODADDY_EMAIL=itakwygraizak@gmail.com
+      - GODADDY_API_KEY=xxx
+      - GODADDY_API_SECRET=xxx
     volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
-      - "./acme.json:/acme.json"
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /home/itakwygraizak/traefik/traefik.yml:/traefik.yml:ro
+      - /home/itakwygraizak/traefik/acme.json:/acme.json
+      - /home/itakwygraizak/traefik/config.yml:/config.yml:ro
     labels:
       - "traefik.enable=true"
-      # Dashboard
-      - "traefik.http.routers.traefik.rule=Host(`iw4sz.pl`)"
-      - "traefik.http.routers.traefik.service=api@internal"
-      - "traefik.http.routers.traefik.tls=true"
-      - "traefik.http.routers.traefik.tls.certresolver=le"
-      - "traefik.http.routers.traefik.entrypoints=websecure"
-      - "traefik.http.routers.traefik.middlewares=authtraefik"
-      - "traefik.http.middlewares.authtraefik.basicauth.users=devAdmin:$$2y$$05$$h9OxLeY20/5uiXjfPgdRxuFlrfqBf2QifYDgrwsR6rAEgX3/dpOGq" # user:devAdmin, password:devto
-      # global redirect to https
-      - "traefik.http.routers.http-catchall.rule=hostregexp(`{host:.+}`)"
-      - "traefik.http.routers.http-catchall.entrypoints=web"
-      - "traefik.http.routers.http-catchall.middlewares=redirect-to-https"
-      # middleware redirect
-      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
-    restart: unless-stopped
-    networks:
-      - traefik-public
-  my-app:
-    image: containous/whoami:v1.3.0
-    hostname: whoami
-    container_name: whoami
-    restart: unless-stopped
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.my-app.rule=Host(`whoami.iw4sz.pl`)"
-      - "traefik.http.routers.my-app.middlewares=auth"
-      - "traefik.http.routers.my-app.entrypoints=websecure"
-      - "traefik.http.routers.my-app.tls=true"
-      - "traefik.http.routers.my-app.tls.certresolver=le"
-      - "traefik.http.middlewares.authtraefik.basicauth.users=devAdmin:$$2y$$05$$h9OxLeY20/5uiXjfPgdRxuFlrfqBf2QifYDgrwsR6rAEgX3/dpOGq" # user:devAdmin, password:devto
-    networks:
-      - traefik-public:
+      - "traefik.http.routers.traefik.entrypoints=http"
+      - "traefik.http.routers.traefik.rule=Host(`traefik-dashboard.iw4sz.pl`)"
+      - "traefik.http.middlewares.traefik-auth.basicauth.users=USER:BASIC_AUTH_PASSWORD"
+      - "traefik.http.middlewares.traefik-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.sslheader.headers.customrequestheaders.X-Forwarded-Proto=https"
+      - "traefik.http.routers.traefik.middlewares=traefik-https-redirect"
+      - "traefik.http.routers.traefik-secure.entrypoints=https"
+      - "traefik.http.routers.traefik-secure.rule=Host(`traefik-dashboard.iw4sz.pl`)"
+      - "traefik.http.routers.traefik-secure.middlewares=traefik-auth"
+      - "traefik.http.routers.traefik-secure.tls=true"
+      - "traefik.http.routers.traefik-secure.tls.certresolver=godaddy"
+      - "traefik.http.routers.traefik-secure.tls.domains[0].main=iw4sz.pl"
+      - "traefik.http.routers.traefik-secure.tls.domains[0].sans=*.iw4sz.pl"
+      - "traefik.http.routers.traefik-secure.service=api@internal"
+
 networks:
-  traefik-public:
+  proxy:
     external: true
