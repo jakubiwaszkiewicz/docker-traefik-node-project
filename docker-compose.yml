@@ -1,43 +1,71 @@
-version: "3"
+version: "3.9"
+
 services:
-  traefik:
-    image: "traefik:latest"
+  reverse-proxy:
+    image: traefik:v2.4
     container_name: traefik
-    restart: unless-stopped
-    security_opt:
-      - no-new-privileges:true
-    networks:
-      - proxy
+    command:
+      - "--api.insecure=true"
+      - "--api.dashboard=true"
+      - "--api.debug=true"
+      - "--providers.docker=true"
+      - "--log.LEVEL=DEBUG"
+      - "--entryPoints.web.address=:80"
+      - "--entryPoints.websecure.address=:443"
+      - "--providers.docker.exposedbydefault=false"
+      - "--certificatesresolvers.myresolver.acme.httpchallenge=true"
+      - "--certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web"
+      - "--certificatesresolvers.myresolver.acme.email=kkuba.iwaszkiewicz@gmail.com"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
     ports:
-      - "80:80"
       - "443:443"
-    environment:
-      - GODADDY_EMAIL=itakwygraizak@gmail.com
-      - GODADDY_API_KEY=xxx
-      - GODADDY_API_SECRET=xxx
+      - "80:80"
+      - "8080:8080"
     volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /home/itakwygraizak/traefik/traefik.yml:/traefik.yml:ro
-      - /home/itakwygraizak/traefik/acme.json:/acme.json
-      - /home/itakwygraizak/traefik/config.yml:/config.yml:ro
+      - "./letsencrypt:/letsencrypt"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+  
+  test_node_1:
+    build:
+      context: ./test_node_1
+      dockerfile: Dockerfile
+    container_name: test_node_1
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.traefik.entrypoints=http"
-      - "traefik.http.routers.traefik.rule=Host(`traefik-dashboard.iw4sz.pl`)"
-      - "traefik.http.middlewares.traefik-auth.basicauth.users=USER:BASIC_AUTH_PASSWORD"
-      - "traefik.http.middlewares.traefik-https-redirect.redirectscheme.scheme=https"
-      - "traefik.http.middlewares.sslheader.headers.customrequestheaders.X-Forwarded-Proto=https"
-      - "traefik.http.routers.traefik.middlewares=traefik-https-redirect"
-      - "traefik.http.routers.traefik-secure.entrypoints=https"
-      - "traefik.http.routers.traefik-secure.rule=Host(`traefik-dashboard.iw4sz.pl`)"
-      - "traefik.http.routers.traefik-secure.middlewares=traefik-auth"
-      - "traefik.http.routers.traefik-secure.tls=true"
-      - "traefik.http.routers.traefik-secure.tls.certresolver=godaddy"
-      - "traefik.http.routers.traefik-secure.tls.domains[0].main=iw4sz.pl"
-      - "traefik.http.routers.traefik-secure.tls.domains[0].sans=*.iw4sz.pl"
-      - "traefik.http.routers.traefik-secure.service=api@internal"
+      - "traefik.http.routers.test_node_1.rule=Host(`iw4sz.pl`)"
+      - "traefik.http.routers.test_node_1.entrypoints=websecure"
+      - "traefik.http.routers.test_node_1.tls.certresolver=myresolver"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+      - "traefik.http.routers.redirs.rule=hostregexp(`{host:.+}`)"
+      - "traefik.http.routers.redirs.entrypoints=web"
+      - "traefik.http.routers.redirs.middlewares=redirect-to-https"
 
-networks:
-  proxy:
-    external: true
+  test-node-2:
+    build:
+      context: ./test_node_2
+      dockerfile: Dockerfile
+    container_name: test_node_2
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.test_node_2.rule=Host(`portfolio.iw4sz.pl`)"
+      - "traefik.http.routers.test_node_2.entrypoints=websecure"
+      - "traefik.http.routers.test_node_2.tls.certresolver=myresolver"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+      - "traefik.http.routers.redirs.rule=hostregexp(`{host:.+}`)"
+      - "traefik.http.routers.redirs.entrypoints=web"
+      - "traefik.http.routers.redirs.middlewares=redirect-to-https"
+
+  test-node-3:
+    build:
+      context: ./test_node_3
+      dockerfile: Dockerfile
+    container_name: test_node_3
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.test_node_3.rule=Host(`services.iw4sz.pl`)"
+      - "traefik.http.routers.test_node_3.entrypoints=websecure"
+      - "traefik.http.routers.test_node_3.tls.certresolver=myresolver"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+      - "traefik.http.routers.redirs.rule=hostregexp(`{host:.+}`)"
+      - "traefik.http.routers.redirs.entrypoints=web"
+      - "traefik.http.routers.redirs.middlewares=redirect-to-https"
