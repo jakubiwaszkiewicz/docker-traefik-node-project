@@ -5,6 +5,7 @@ services:
     image: traefik:v2.4
     container_name: traefik
     command:
+      - "traefik.enable=true"
       - "--api.insecure=true"
       - "--api.dashboard=true"
       - "--api.debug=true"
@@ -17,6 +18,7 @@ services:
       - "--certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web"
       - "--certificatesresolvers.myresolver.acme.email=kkuba.iwaszkiewicz@gmail.com"
       - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
     ports:
       - "443:443"
       - "80:80"
@@ -35,6 +37,7 @@ services:
       - "traefik.http.routers.test_node_1.rule=Host(`iw4sz.pl`)"
       - "traefik.http.routers.test_node_1.entrypoints=websecure"
       - "traefik.http.routers.test_node_1.tls.certresolver=myresolver"
+      - "traefik.http.routers.test_node_1.middlewares=redirect-to-https@docker"
       - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
       - "traefik.http.routers.redirs.rule=hostregexp(`{host:.+}`)"
       - "traefik.http.routers.redirs.entrypoints=web"
@@ -50,6 +53,7 @@ services:
       - "traefik.http.routers.test_node_2.rule=Host(`portfolio.iw4sz.pl`)"
       - "traefik.http.routers.test_node_2.entrypoints=websecure"
       - "traefik.http.routers.test_node_2.tls.certresolver=myresolver"
+      - "traefik.http.routers.test_node_1.middlewares=redirect-to-https@docker"
       - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
       - "traefik.http.routers.redirs.rule=hostregexp(`{host:.+}`)"
       - "traefik.http.routers.redirs.entrypoints=web"
@@ -65,6 +69,7 @@ services:
       - "traefik.http.routers.test_node_3.rule=Host(`services.iw4sz.pl`)"
       - "traefik.http.routers.test_node_3.entrypoints=websecure"
       - "traefik.http.routers.test_node_3.tls.certresolver=myresolver"
+      - "traefik.http.routers.test_node_1.middlewares=redirect-to-https@docker"
       - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
       - "traefik.http.routers.redirs.rule=hostregexp(`{host:.+}`)"
       - "traefik.http.routers.redirs.entrypoints=web"
