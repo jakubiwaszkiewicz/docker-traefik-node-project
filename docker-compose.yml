@@ -18,7 +18,7 @@ services:
       - "--providers.docker.exposedbydefault=false"
       - "--certificatesresolvers.myresolver.acme.httpchallenge=true"
       - "--certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web"
-      - "--certificatesresolvers.myresolver.acme.email=kkuba.iwaszkiewicz@gmail.com"
+      - "--certificatesresolvers.myresolver.acme.email=itakwygraizak@gmail.com"
       - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
     ports:
       - "443:443"
